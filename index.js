@@ -41,6 +41,9 @@ wss.on('connection', (ws) => {
             case 'ttt-turn':
                 TTTTurn(ws, data)
                 break
+            case 'rps-turn':
+                RPSTurn(data)
+                break
         }
     })
 })
@@ -73,9 +76,14 @@ function joinExistingGame(client, data) {
 }
 
 function startTheGame(client, data) {
-    games[data.id].game.state = Array.from(Array(9))
-    games[data.id].game.turn = 'x'
-    games[data.id].game.statusCode = 'started'
+    const game = games[data.id].game
+    if (game.game === 'ttt') {
+        game.state = Array.from(Array(9))
+        game.turn = 'x'
+    } else {
+        game.turn = game.hostName
+    }
+    game.statusCode = 'started'
     games[data.id].guest.send(JSON.stringify(games[data.id].game))
     client.send(JSON.stringify(games[data.id].game))
 }
@@ -155,6 +163,62 @@ function TTTTurn(client, data) {
             game.statusCode = 'over'
             games[data.id].guest.send(JSON.stringify(game))
             games[data.id].host.send(JSON.stringify(game))
+        }
+    }
+}
+
+function RPSTurn(data) {
+    const game = games[data.id].game
+    if (game.statusCode === 'over') {
+        games[data.id].guest.send(JSON.stringify(game))
+        games[data.id].host.send(JSON.stringify(game))
+    } else {
+        if (data.username === game.hostName) {
+            game.hostMove = data.move
+        } else {
+            game.guestMove = data.move
+        }
+
+        const result = RPSDefineWinner(game)
+        if (result !== false) {
+            if (result === 1) {
+                game.winner = game.hostName
+            } else if (result === 2) {
+                game.winner = game.guestName
+            } else {
+                game.winner = 0
+            }
+            game.statusCode = 'over'
+        }
+        games[data.id].guest.send(JSON.stringify(game))
+        games[data.id].host.send(JSON.stringify(game))
+    }
+}
+
+function RPSDefineWinner(game) {
+    if (!game.hostMove || !game.guestMove) {
+        return false
+    }
+
+    if (game.hostMove === game.guestMove) {
+        return 0
+    } else if (game.hostMove == 'rock') {
+        if (game.guestMove == 'paper') {
+            return 2
+        } else {
+            return 1
+        }
+    } else if (game.hostMove == 'scissors') {
+        if (game.guestMove == 'rock') {
+            return 2
+        } else {
+            return 1
+        }
+    } else if (game.hostMove == 'paper') {
+        if (game.guestMove == 'scissors') {
+            return 2
+        } else {
+            return 1
         }
     }
 }
