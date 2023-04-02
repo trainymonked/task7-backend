@@ -116,7 +116,7 @@ function TTThandleResultValidation(gameState) {
             break
         }
     }
-    if (gameState.every(el => el)) {
+    if (gameState.every(el => el) && !roundWon) {
         return 'tie'
     }
     return roundWon && a
