@@ -116,6 +116,9 @@ function TTThandleResultValidation(gameState) {
             break
         }
     }
+    if (gameState.every(el => el)) {
+        return 'tie'
+    }
     return roundWon && a
 }
 
@@ -157,8 +160,10 @@ function TTTTurn(client, data) {
         if (result) {
             if (result === 'x') {
                 game.winner = game.hostName
-            } else {
+            } else if (result === 'o') {
                 game.winner = game.guestName
+            } else {
+                game.winner = 'tie'
             }
             game.statusCode = 'over'
             games[data.id].guest.send(JSON.stringify(game))
